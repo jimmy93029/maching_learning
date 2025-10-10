@@ -51,9 +51,9 @@ def main():
     trials = readFile()
     
     print("Case 1: a = 0, b = 0   ========================================================")
-    Case(trials, a=0, b=0)
+    Case(trials, a=1, b=1)
     print("Case 2: a = 10, b = 1  ========================================================")
-    Case(trials, a=10, b=1)
+    Case(trials, a=10, b=10)
 
 
 if __name__ == "__main__":
