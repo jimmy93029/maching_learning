@@ -43,7 +43,7 @@ def print_output(X_batch, Y_batch, mu_n, Sigma_n, predictive_mean, predictive_va
     y_data = Y_batch.flatten()
 
     with open(filename, 'a') as log_file:
-        log_file.write(f"Add data point: ({x_data[1]}, {y_data}):\n")
+        log_file.write(f"Add data point: ({x_data[1]}, {y_data[0]}):\n")
         
         # Print posterior mean
         log_file.write("Posterior mean:\n")
@@ -130,8 +130,10 @@ if __name__ == '__main__':
     n = 4
     a = 1
     w = np.array([1, 2, 3, 4]).reshape(-1, 1)
-    num_samples = 100
+    num_samples = 1000
 
-    Case(b, n, a, w, num_samples, name)
+    Case(b=1, n=4, a=1, w=np.array([1, 2, 3, 4]).reshape(-1, 1), num_samples=1000, name="Case1")
+    Case(b=100, n=4, a=1, w=np.array([1, 2, 3, 4]).reshape(-1, 1), num_samples=1000, name="Case2")
+    Case(b=1, n=3, a=3, w=np.array([1, 2, 3]).reshape(-1, 1), num_samples=1000, name="Case3")
 
 
