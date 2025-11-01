@@ -61,6 +61,7 @@ def newtons_method(X, y, m, alpha_gd=0.01, max_iter=100000, tol=1e-5):
             update_step = H_inv @ grad
             w_new = w - update_step
             method = "Newton"
+            print(method)
         
         except np.linalg.LinAlgError:
             # Fallback: Hessian is singular, use steepest descent instead [cite: 11]
@@ -68,6 +69,7 @@ def newtons_method(X, y, m, alpha_gd=0.01, max_iter=100000, tol=1e-5):
             update_step = alpha_gd * grad 
             w_new = w - update_step
             method = "Steepest Descent Fallback"
+            print(method)
             
         # Check for convergence [cite: 12]
         if np.linalg.norm(w - w_new) < tol:
