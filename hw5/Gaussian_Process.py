@@ -165,7 +165,7 @@ def main():
     X_test = np.linspace(-60, 60, 200).reshape(-1, 1)
 
     # --- Task 1: Prediction with Initial Parameters ---
-    initial_params = np.array([1.0, 1.0, 1.0])
+    initial_params = np.array([1.0, 0.3, 1.0])
 
     mu_star_init, sigma_sq_star_init = gp_predict(X, y, X_test, initial_params, beta_inv)
 
