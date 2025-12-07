@@ -24,20 +24,6 @@ def compute_sq_dist_mat(X, Y):
 # ==========================================
 
 def initialize_centers(data, k, method='random', for_kernel=False, K_matrix=None):
-    """
-    負責產生初始中心點 (Standard) 或 初始標籤 (Kernel)
-    
-    Args:
-        data: (N, d) 資料矩陣 (Standard mode)
-        k: 群數
-        method: 'random', 'kmeans++', 'fps', 'random_partition'
-        for_kernel: Boolean, 是否為 Kernel K-means 模式
-        K_matrix: (N, N) Gram Matrix, 當 for_kernel=True 時必須提供
-        
-    Returns:
-        if for_kernel=False: centers (k, d) - 初始中心座標
-        if for_kernel=True:  labels (N,)    - 初始分群標籤
-    """
     n = data.shape[0] if data is not None else K_matrix.shape[0]
     
     # --- Logic for Kernel K-means (Return Labels) ---
@@ -149,7 +135,7 @@ def initialize_centers(data, k, method='random', for_kernel=False, K_matrix=None
             raise ValueError(f"Unknown method: {method}")
 
 # ==========================================
-# 2. 基礎設定與讀取圖片
+# 2. Utils
 # ==========================================
 
 def load_image(image_path):
@@ -167,29 +153,6 @@ def load_image(image_path):
     # 顏色資料 (Color)
     colors = data.reshape(-1, 3)
     return data, colors, coords, h, w
-
-def make_gif(frame_folder, output_name):
-    frames = [Image.open(image) for image in sorted(glob.glob(f"{frame_folder}/*.png"))]
-    if frames:
-        frames[0].save(output_name, format="GIF", append_images=frames[1:],
-                       save_all=True, duration=100, loop=0)
-        print(f"GIF saved to {output_name}")
-
-def visualize_clusters(labels, h, w, filename):
-    cluster_colors = np.array([
-        [1, 0, 0], [0, 1, 0], [0, 0, 1],
-        [1, 1, 0], [1, 0, 1], [0, 1, 1]
-    ])
-    img_data = np.zeros((h * w, 3))
-    for i in range(h * w):
-        img_data[i] = cluster_colors[labels[i] % len(cluster_colors)]
-    img_data = img_data.reshape(h, w, 3)
-    
-    plt.figure(figsize=(4, 4))
-    plt.imshow(img_data)
-    plt.axis('off')
-    plt.savefig(filename, bbox_inches='tight', pad_inches=0)
-    plt.close()
 
 # ==========================================
 # 3. Kernel 計算
@@ -245,9 +208,6 @@ def simple_kmeans(U, k, h, w, output_dir, max_iters=100, init_method='random'):
 
 
 def kernel_k_means(K, k, h, w, max_iters=100, output_dir='kkm_frames', init_method='random'):
-    """
-    Kernel K-means with initialization support
-    """
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
         
@@ -286,10 +246,7 @@ def kernel_k_means(K, k, h, w, max_iters=100, output_dir='kkm_frames', init_meth
     return labels
 
 
-def spectral_clustering(K, k, h, w, mode, output_dir, init_method='random'):
-    """
-    Spectral Clustering Wrapper
-    """
+def spectral_clustering(K, k, h, w, mode, base_output_dir, output_dir, init_method='random'):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
         
@@ -299,8 +256,6 @@ def spectral_clustering(K, k, h, w, mode, output_dir, init_method='random'):
     D_vec[D_vec == 0] = 1e-10 
     D = np.diag(D_vec)
     L = D - W
-    
-    print(f"Computing Eigenvectors for {mode} cut...")
     
     if mode == 'ratio':
         eigvals, eigvecs = np.linalg.eigh(L)
@@ -317,12 +272,76 @@ def spectral_clustering(K, k, h, w, mode, output_dir, init_method='random'):
         row_sums = np.sqrt(np.sum(U**2, axis=1)).reshape(-1, 1)
         row_sums[row_sums == 0] = 1e-10
         U = U / row_sums
-        
-    print(f"Running K-means on Eigenvectors (Init: {init_method})...")
+
     # Pass init_method to simple_kmeans
     labels = simple_kmeans(U, k, h, w, output_dir, init_method=init_method)
+    plot_eigenspace(U, labels, mode, base_output_dir, k)
     
     return labels
+
+# ==========================================
+# Plot
+# ==========================================
+
+def plot_eigenspace(U, labels, mode, output_dir, k):
+    """
+    Plots data points in the eigenspace (U), colored by their final cluster assignments (labels).
+    This is used to visualize the separation of clusters in the feature space.
+    """
+    if k < 2:
+        print("K is too small to plot 2D eigenspace.")
+        return
+    
+    X_coord = U[:, 0]
+    Y_coord = U[:, 1]
+    
+    # Define a color palette for visualizing clusters
+    cluster_colors = np.array([
+        [1, 0, 0], [0, 1, 0], [0, 0, 1],
+        [1, 1, 0], [1, 0, 1], [0, 1, 1]
+    ])
+    
+    # Map cluster labels to colors
+    colors = cluster_colors[labels % len(cluster_colors)]
+    
+    # --- Plotting ---
+    plt.figure(figsize=(8, 8))
+    plt.scatter(X_coord, Y_coord, c=colors, s=5, alpha=0.5)
+    
+    plt.title(f"Eigenspace Scatter Plot ({mode} Cut, k={k})")
+    plt.xlabel(f"Eigenvector 1 (U[:, 0])")
+    plt.ylabel(f"Eigenvector 2 (U[:, 1])")
+    
+    # Save the figure
+    filename = f"{output_dir}/eigenspace_plot_{mode}_cluster{k}.png"
+    plt.savefig(filename)
+    plt.close()
+    print(f"Eigenspace plot saved to {filename}")
+
+
+def make_gif(frame_folder, output_name):
+    frames = [Image.open(image) for image in sorted(glob.glob(f"{frame_folder}/*.png"))]
+    if frames:
+        frames[0].save(output_name, format="GIF", append_images=frames[1:],
+                       save_all=True, duration=100, loop=0)
+        print(f"GIF saved to {output_name}")
+
+def visualize_clusters(labels, h, w, filename):
+    cluster_colors = np.array([
+        [1, 0, 0], [0, 1, 0], [0, 0, 1],
+        [1, 1, 0], [1, 0, 1], [0, 1, 1]
+    ])
+    img_data = np.zeros((h * w, 3))
+    for i in range(h * w):
+        img_data[i] = cluster_colors[labels[i] % len(cluster_colors)]
+    img_data = img_data.reshape(h, w, 3)
+    
+    plt.figure(figsize=(4, 4))
+    plt.imshow(img_data)
+    plt.axis('off')
+    plt.savefig(filename, bbox_inches='tight', pad_inches=0)
+    plt.close()
+
 
 # ==========================================
 # Main: Run 4x3 Experiments
@@ -332,7 +351,7 @@ if __name__ == "__main__":
     IMAGE_FILE = 'image1.png'  # Ensure this file exists
     GAMMA_C = 1          
     GAMMA_S = 1
-    K_CLUSTERS = 3
+    K_CLUSTERS = 4
     
     if not os.path.exists(IMAGE_FILE):
         print(f"Error: {IMAGE_FILE} not found. Please place an image file.")
@@ -363,13 +382,13 @@ if __name__ == "__main__":
             # 2. Spectral (Ratio)
             print(f"  [2/3] Spectral Ratio Cut ({method})")
             dir_ratio = f"{base_output_dir}/{method}/ratio"
-            spectral_clustering(Gram_K, K_CLUSTERS, h, w, mode='ratio', output_dir=dir_ratio, init_method=method)
+            spectral_clustering(Gram_K, K_CLUSTERS, h, w, mode='ratio', base_output_dir=base_output_dir, output_dir=dir_ratio, init_method=method)
             make_gif(dir_ratio, f"{base_output_dir}/{method}_ratio.gif")
             
             # 3. Spectral (Normalized)
             print(f"  [3/3] Spectral Normalized Cut ({method})")
             dir_norm = f"{base_output_dir}/{method}/norm"
-            spectral_clustering(Gram_K, K_CLUSTERS, h, w, mode='normalized', output_dir=dir_norm, init_method=method)
+            spectral_clustering(Gram_K, K_CLUSTERS, h, w, mode='normalized', base_output_dir=base_output_dir, output_dir=dir_norm, init_method=method)
             make_gif(dir_norm, f"{base_output_dir}/{method}_norm.gif")
             
         print("\nAll experiments completed.")
