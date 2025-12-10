@@ -214,6 +214,6 @@ def Case(n, mx1, my1, vx1, vy1, mx2, my2, vx2, vy2, name="Case1"):
 
 if __name__ == "__main__":
     # Parameters for Case 1 
-    # Case(n=50, mx1=1, my1=1, vx1=2, vy1=2, mx2=10, my2=10, vx2=2, vy2=2, name="Case1")
+    Case(n=50, mx1=1, my1=1, vx1=2, vy1=2, mx2=10, my2=10, vx2=2, vy2=2, name="Case1")
     # parameters for Case 2
     Case(n=50, mx1=1, my1=1, vx1=2, vy1=2, mx2=3, my2=3, vx2=4, vy2=4, name="Case2")

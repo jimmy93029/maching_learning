@@ -207,8 +207,8 @@ def assign_labels_and_evaluate(y_true, y_pred_cluster, mu, K, rows, cols):
 # --- 6. MAIN EXECUTION BLOCK ---
 if __name__ == '__main__':
     # File names (assuming they match your screenshot and are in the current directory)
-    IMAGE_FILE = 'train-images.idx3-ubyte__'
-    LABEL_FILE = 'train-labels.idx1-ubyte__'
+    IMAGE_FILE = 'train-images.idx3-ubyte_'
+    LABEL_FILE = 'train-labels.idx1-ubyte_'
     K_CLUSTERS = 10 # Number of clusters
     MAX_ITER = 100 # Set a reasonable maximum number of iterations
 
