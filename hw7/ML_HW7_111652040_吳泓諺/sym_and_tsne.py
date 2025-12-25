@@ -135,7 +135,7 @@ def run_embedding(X, labels, method='tsne', no_dims=2, perplexity=30.0):
             frames.append(image.reshape(fig.canvas.get_width_height()[::-1] + (3,)))
             plt.close()
 
-    save_gif(frames, f"{method}_optimization.gif")
+    save_gif(frames, f"{method}_optimization_{perplexity}.gif")
     return Y, P, Q
 
 
